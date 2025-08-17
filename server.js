@@ -64,6 +64,9 @@ app.post('/api/ciudades', async (req, res) => {
       [nombre.trim()]
     );
     
+    // Enviar actualización en tiempo real
+    sendUpdateToAllClients('ciudad_agregada', result.rows[0]);
+    
     res.status(201).json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') { // Error de duplicado
@@ -94,6 +97,9 @@ app.put('/api/ciudades/:id', async (req, res) => {
       return res.status(404).json({ error: 'Ciudad no encontrada' });
     }
     
+    // Enviar actualización en tiempo real
+    sendUpdateToAllClients('ciudad_actualizada', result.rows[0]);
+    
     res.json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') { // Error de duplicado
@@ -118,6 +124,9 @@ app.delete('/api/ciudades/:id', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Ciudad no encontrada' });
     }
+    
+    // Enviar actualización en tiempo real
+    sendUpdateToAllClients('ciudad_eliminada', { id: id, message: 'Ciudad eliminada' });
     
     res.json({ message: 'Ciudad eliminada correctamente' });
   } catch (error) {
@@ -147,6 +156,48 @@ app.get('/api/ciudades/buscar', async (req, res) => {
   }
 });
 
+// Server-Sent Events para actualizaciones en tiempo real
+let clients = [];
+
+// Endpoint para SSE
+app.get('/api/events', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Cache-Control'
+  });
+
+  // Enviar mensaje inicial
+  res.write('data: {"type": "connected", "message": "Conectado al servidor"}\n\n');
+
+  // Agregar cliente a la lista
+  const clientId = Date.now();
+  const newClient = {
+    id: clientId,
+    res
+  };
+  clients.push(newClient);
+
+  // Remover cliente cuando se desconecte
+  req.on('close', () => {
+    clients = clients.filter(client => client.id !== clientId);
+    console.log(`Cliente ${clientId} desconectado. Clientes activos: ${clients.length}`);
+  });
+
+  console.log(`Cliente ${clientId} conectado. Clientes activos: ${clients.length}`);
+});
+
+// Función para enviar actualizaciones a todos los clientes
+function sendUpdateToAllClients(type, data) {
+  const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
+  clients.forEach(client => {
+    client.res.write(`data: ${message}\n\n`);
+  });
+  console.log(`Actualización enviada a ${clients.length} clientes: ${type}`);
+}
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API funcionando correctamente' });
@@ -158,5 +209,6 @@ initializeDatabase().then(() => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
     console.log(`📊 API disponible en: http://localhost:${PORT}/api`);
     console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`📡 SSE disponible en: http://localhost:${PORT}/api/events`);
   });
 });
