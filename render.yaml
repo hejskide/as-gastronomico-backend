@@ -4,9 +4,10 @@ services:
     env: node
     buildCommand: npm install
     startCommand: npm start
-    envVars:
-      - key: NODE_VERSION
-        value: 20.11.0
+                    envVars:
+                  - key: NODE_VERSION
+                    value: 20.11.0
+                  # Forzar actualización de Render.com - Patrocinadores
       - key: DATABASE_URL
         fromDatabase:
           name: as-gastronomico-db
