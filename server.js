@@ -19,7 +19,7 @@ const pool = new Pool({
 });
 
 // Crear tabla de ciudades si no existe
-const createTableQuery = `
+const createCiudadesTableQuery = `
   CREATE TABLE IF NOT EXISTS ciudades (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
@@ -32,8 +32,8 @@ const createPatrocinadoresTableQuery = `
   CREATE TABLE IF NOT EXISTS patrocinadores (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    telefono VARCHAR(50),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    telefono VARCHAR(20),
     representante VARCHAR(200),
     logo_fondo_claro TEXT,
     logo_fondo_oscuro TEXT,
@@ -54,7 +54,7 @@ const createPatrocinadoresCiudadesTableQuery = `
 // Inicializar la base de datos
 async function initializeDatabase() {
   try {
-    await pool.query(createTableQuery);
+    await pool.query(createCiudadesTableQuery);
     console.log('✅ Tabla ciudades creada/verificada correctamente');
     
     await pool.query(createPatrocinadoresTableQuery);
@@ -275,12 +275,13 @@ app.post('/api/patrocinadores', async (req, res) => {
     }
 
     // Insertar patrocinador
-    const result = await pool.query(
-      'INSERT INTO patrocinadores (nombre, email, telefono, representante, logo_fondo_claro, logo_fondo_oscuro) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+    const patrocinadorResult = await pool.query(
+      `INSERT INTO patrocinadores (nombre, email, telefono, representante, logo_fondo_claro, logo_fondo_oscuro) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [nombre.trim(), email.trim(), telefono?.trim() || null, representante?.trim() || null, logo_fondo_claro || null, logo_fondo_oscuro || null]
     );
     
-    const patrocinador = result.rows[0];
+    const patrocinador = patrocinadorResult.rows[0];
     
     // Asociar ciudades si se proporcionan
     if (ciudades_ids && ciudades_ids.length > 0) {
@@ -293,7 +294,7 @@ app.post('/api/patrocinadores', async (req, res) => {
     }
     
     // Obtener el patrocinador con sus ciudades
-    const patrocinadorCompleto = await pool.query(`
+    const finalResult = await pool.query(`
       SELECT 
         p.*,
         ARRAY_AGG(c.nombre) as ciudades_nombres,
@@ -305,13 +306,13 @@ app.post('/api/patrocinadores', async (req, res) => {
       GROUP BY p.id
     `, [patrocinador.id]);
     
-    const resultadoFinal = {
-      ...patrocinadorCompleto.rows[0],
-      ciudades_nombres: patrocinadorCompleto.rows[0].ciudades_nombres[0] === null ? [] : patrocinadorCompleto.rows[0].ciudades_nombres,
-      ciudades_ids: patrocinadorCompleto.rows[0].ciudades_ids[0] === null ? [] : patrocinadorCompleto.rows[0].ciudades_ids
+    const patrocinadorFinal = {
+      ...finalResult.rows[0],
+      ciudades_nombres: finalResult.rows[0].ciudades_nombres[0] === null ? [] : finalResult.rows[0].ciudades_nombres,
+      ciudades_ids: finalResult.rows[0].ciudades_ids[0] === null ? [] : finalResult.rows[0].ciudades_ids
     };
     
-    res.status(201).json(resultadoFinal);
+    res.status(201).json(patrocinadorFinal);
   } catch (error) {
     if (error.code === '23505') { // Error de duplicado
       res.status(400).json({ error: 'Ya existe un patrocinador con ese email' });
@@ -340,7 +341,9 @@ app.put('/api/patrocinadores/:id', async (req, res) => {
 
     // Actualizar patrocinador
     const result = await pool.query(
-      'UPDATE patrocinadores SET nombre = $1, email = $2, telefono = $3, representante = $4, logo_fondo_claro = $5, logo_fondo_oscuro = $6 WHERE id = $7 RETURNING *',
+      `UPDATE patrocinadores 
+       SET nombre = $1, email = $2, telefono = $3, representante = $4, logo_fondo_claro = $5, logo_fondo_oscuro = $6 
+       WHERE id = $7 RETURNING *`,
       [nombre.trim(), email.trim(), telefono?.trim() || null, representante?.trim() || null, logo_fondo_claro || null, logo_fondo_oscuro || null, id]
     );
     
@@ -361,7 +364,7 @@ app.put('/api/patrocinadores/:id', async (req, res) => {
     }
     
     // Obtener el patrocinador actualizado con sus ciudades
-    const patrocinadorCompleto = await pool.query(`
+    const finalResult = await pool.query(`
       SELECT 
         p.*,
         ARRAY_AGG(c.nombre) as ciudades_nombres,
@@ -373,13 +376,13 @@ app.put('/api/patrocinadores/:id', async (req, res) => {
       GROUP BY p.id
     `, [id]);
     
-    const resultadoFinal = {
-      ...patrocinadorCompleto.rows[0],
-      ciudades_nombres: patrocinadorCompleto.rows[0].ciudades_nombres[0] === null ? [] : patrocinadorCompleto.rows[0].ciudades_nombres,
-      ciudades_ids: patrocinadorCompleto.rows[0].ciudades_ids[0] === null ? [] : patrocinadorCompleto.rows[0].ciudades_ids
+    const patrocinadorFinal = {
+      ...finalResult.rows[0],
+      ciudades_nombres: finalResult.rows[0].ciudades_nombres[0] === null ? [] : finalResult.rows[0].ciudades_nombres,
+      ciudades_ids: finalResult.rows[0].ciudades_ids[0] === null ? [] : finalResult.rows[0].ciudades_ids
     };
     
-    res.json(resultadoFinal);
+    res.json(patrocinadorFinal);
   } catch (error) {
     if (error.code === '23505') { // Error de duplicado
       res.status(400).json({ error: 'Ya existe un patrocinador con ese email' });
@@ -458,6 +461,5 @@ initializeDatabase().then(() => {
     console.log(`📊 API disponible en: http://localhost:${PORT}/api`);
     console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
     console.log(`📡 SSE disponible en: http://localhost:${PORT}/api/events`);
-    console.log(`🎯 Patrocinadores endpoints: /api/patrocinadores`);
   });
 });
