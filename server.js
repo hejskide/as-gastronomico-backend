@@ -454,6 +454,37 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API funcionando correctamente con patrocinadores' });
 });
 
+// Endpoint de prueba para verificar tablas
+app.get('/api/test-tables', async (req, res) => {
+  try {
+    // Verificar si existe la tabla patrocinadores
+    const patrocinadoresCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'patrocinadores'
+      );
+    `);
+    
+    // Verificar si existe la tabla patrocinadores_ciudades
+    const patrocinadoresCiudadesCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'patrocinadores_ciudades'
+      );
+    `);
+    
+    res.json({
+      patrocinadores_table_exists: patrocinadoresCheck.rows[0].exists,
+      patrocinadores_ciudades_table_exists: patrocinadoresCiudadesCheck.rows[0].exists
+    });
+  } catch (error) {
+    console.error('Error verificando tablas:', error);
+    res.status(500).json({ error: 'Error verificando tablas' });
+  }
+});
+
 // Inicializar base de datos y arrancar servidor
 initializeDatabase().then(() => {
   app.listen(PORT, () => {
