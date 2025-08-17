@@ -339,6 +339,16 @@ app.put('/api/patrocinadores/:id', async (req, res) => {
       return res.status(400).json({ error: 'El formato del email no es válido' });
     }
 
+    // Verificar si el email ya existe en otro patrocinador (excluyendo el actual)
+    const emailCheck = await pool.query(
+      'SELECT id FROM patrocinadores WHERE email = $1 AND id != $2',
+      [email.trim(), id]
+    );
+    
+    if (emailCheck.rows.length > 0) {
+      return res.status(400).json({ error: 'Ya existe otro patrocinador con ese email' });
+    }
+
     // Actualizar patrocinador
     const result = await pool.query(
       `UPDATE patrocinadores 
@@ -384,12 +394,8 @@ app.put('/api/patrocinadores/:id', async (req, res) => {
     
     res.json(patrocinadorFinal);
   } catch (error) {
-    if (error.code === '23505') { // Error de duplicado
-      res.status(400).json({ error: 'Ya existe un patrocinador con ese email' });
-    } else {
-      console.error('Error actualizando patrocinador:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
-    }
+    console.error('Error actualizando patrocinador:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
