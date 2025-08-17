@@ -451,7 +451,7 @@ app.get('/api/patrocinadores/buscar', async (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'API funcionando correctamente' });
+  res.json({ status: 'OK', message: 'API funcionando correctamente con patrocinadores' });
 });
 
 // Inicializar base de datos y arrancar servidor
