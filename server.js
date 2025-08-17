@@ -451,7 +451,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API funcionando correctamente' });
 });
 
-// Inicializar base de datos y arrancar servidor
+// Inicializar base de datos y arrancar servidor - Patrocinadores v2
 initializeDatabase().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
