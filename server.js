@@ -451,12 +451,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API funcionando correctamente' });
 });
 
-// Inicializar base de datos y arrancar servidor - Patrocinadores v2
+// Inicializar base de datos y arrancar servidor
 initializeDatabase().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
     console.log(`📊 API disponible en: http://localhost:${PORT}/api`);
     console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
     console.log(`📡 SSE disponible en: http://localhost:${PORT}/api/events`);
+    console.log(`🎯 Patrocinadores endpoints: /api/patrocinadores`);
   });
 });
