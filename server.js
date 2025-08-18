@@ -764,7 +764,17 @@ app.get('/api/restaurantes/buscar', async (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'API funcionando correctamente con restaurantes - Versión 1.0.2' });
+  res.json({ 
+    status: 'OK', 
+    message: 'API funcionando correctamente con restaurantes - Versión 1.0.3',
+    features: ['ciudades', 'patrocinadores', 'restaurantes'],
+    endpoints: {
+      health: '/api/health',
+      ciudades: '/api/ciudades',
+      patrocinadores: '/api/patrocinadores',
+      restaurantes: '/api/restaurantes'
+    }
+  });
 });
 
 // Endpoint de prueba para verificar que el servidor está funcionando
