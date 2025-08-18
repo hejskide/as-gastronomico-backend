@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: [
     'https://as-gastronomico-app.onrender.com',
+    'https://as-gastronomico-staging-app.onrender.com',
     'http://localhost:19006',
     'http://localhost:3000',
     'http://localhost:8081'
@@ -764,9 +765,13 @@ app.get('/api/restaurantes/buscar', async (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
+  const environment = process.env.NODE_ENV || 'development';
+  const isStaging = environment === 'staging';
+  
   res.json({ 
     status: 'OK', 
-    message: 'API funcionando correctamente con restaurantes - Versión 1.0.3',
+    message: `API funcionando correctamente con restaurantes - Versión 1.0.3 - ${isStaging ? 'STAGING' : 'PRODUCCIÓN'}`,
+    environment: environment,
     features: ['ciudades', 'patrocinadores', 'restaurantes'],
     endpoints: {
       health: '/api/health',
@@ -814,7 +819,7 @@ const initializeDatabase = async () => {
     console.log('🔧 Iniciando inicialización de base de datos...');
     console.log('🔧 DATABASE_URL configurada:', process.env.DATABASE_URL ? 'Sí' : 'No');
     console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
-    console.log('🔧 Versión del servidor: 1.0.2 - Restaurantes implementados');
+    console.log('🔧 Versión del servidor: 1.0.3 - Múltiples entornos soportados');
     
     await createTables();
     console.log('✅ Base de datos inicializada correctamente');
