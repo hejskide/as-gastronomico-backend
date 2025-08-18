@@ -1,0 +1,5 @@
+[33m6d81e29[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Agregar endpoint de prueba para verificar tablas de patrocinadores
+[33mf73572c[m Forzar actualización del backend para incluir endpoints de patrocinadores
+[33m2811d9e[m Agregar funcionalidad de patrocinadores con tablas y endpoints completos
+[33ma6a4e3d[m Fix: Force backend deployment for patrocinadores endpoints
+[33m9434224[m Fix: Force backend deployment for patrocinadores endpoints

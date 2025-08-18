@@ -11,3 +11,5 @@ services:
         fromDatabase:
           name: as-gastronomico-db
           property: connectionString
+
+
